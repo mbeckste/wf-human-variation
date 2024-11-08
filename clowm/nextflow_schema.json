@@ -268,7 +268,10 @@
                             "hidden": true
                         }
                     }
-                }
+                },
+		"required": [
+		    "out_dir"
+		]
             },
             "required": [
                 "ref",
