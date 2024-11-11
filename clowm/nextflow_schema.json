@@ -273,7 +273,6 @@
             "required": [
                 "ref",
                 "bam",
-		"bed",
 		"out_dir"
             ]
         },
