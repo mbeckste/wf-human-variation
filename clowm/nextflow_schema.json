@@ -268,14 +268,12 @@
                             "hidden": true
                         }
                     }
-                },
-		"required": [
-		    "out_dir"
-		]
+                }
             },
             "required": [
                 "ref",
-                "bam"
+                "bam",
+		"out_dir"
             ]
         },
         "sv_options": {
