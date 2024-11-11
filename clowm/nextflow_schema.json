@@ -261,7 +261,7 @@
                     "title": "Output directory",
                     "type": "string",
                     "default": "output",
-                    "format": "directory-path",
+                    "format": "file-path",
                     "description": "Directory for output of all workflow results.",
                     "overrides": {
                         "minknow": {
@@ -273,6 +273,7 @@
             "required": [
                 "ref",
                 "bam",
+		"bed",
 		"out_dir"
             ]
         },
