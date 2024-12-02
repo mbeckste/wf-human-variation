@@ -7,6 +7,7 @@
   ],
   "exampleParameters": {
       "bam": "s3://workflow-exampledata/epi2me-ont-human-variation/example1/demo.bam",
-      "ref": "s3://workflow-exampledata/epi2me-ont-human-variation/example1/demo.fasta"
+      "ref": "s3://workflow-exampledata/epi2me-ont-human-variation/example1/demo.fasta",
+      "bed": "s3://workflow-exampledata/epi2me-ont-human-variation/example1/demo.bed"
   }
 }
