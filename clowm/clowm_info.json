@@ -1,0 +1,12 @@
+{
+  "inputParameters": [
+    "bam"
+  ],
+  "outputParameters": [
+      "out_dir"
+  ],
+  "exampleParameters": {
+      "bam": "s3://workflow-exampledata/epi2me-ont-human-variation/example1/demo.bam",
+      "ref": "s3://workflow-exampledata/epi2me-ont-human-variation/example1/demo.fasta"
+  }
+}
