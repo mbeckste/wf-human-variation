@@ -4,6 +4,30 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v2.6.0]
+### Changed
+- Haplotagged XAM will now include all input reads (including unmapped reads), rather than only reads aligned to phased contigs.
+- Reconciled workflow with wf-template v5.3.4.
+- Decreased RAM requirement for SNP evaluate_candidates to increase throughput of tasks.
+### Fixed
+- Incorrect median quality score reported in stats.json.
+
+## [v2.5.1]
+- Hidden additional options in MinKNOW for a simplified user experience.
+
+## [v2.5.0]
+### Changed
+- Reconciled workflow with wf-template v5.3.2
+- Update Spectre to v0.3.2, which includes support for calling CNVs in hg19 data.
+- ClinVar version in SnpEff container updated to version 20241103.
+- Hidden additional options in MinKNOW for a simplified user experience.
+- Improved performance of readStats process by updating to bamstats 0.19.1.
+### Added
+- `--spectre_args` may be used to provide custom arguments to the Spectre process.
+### Fixed
+- Collections of sorted XAM files eligible for merge will no longer be needlessly re-sorted before merge.
+- Invalid method invocation when using QDNAseq with IGV output enabled.
+
 ## [v2.4.1]
 ### Changed
 - Reconciled workflow with wf-template v5.2.6

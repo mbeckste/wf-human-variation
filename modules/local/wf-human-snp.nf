@@ -216,6 +216,13 @@ process phase_contig {
         """
 }
 
+// the goal here is to avoid an expensive sort by catting instead. we achieve this
+// by organising a file of file names of all the contigs to match the order the
+// contigs are observed in the first input BAM. we can safely assume all input BAM
+// will have the same SQ lines as ingress enforces this.
+// we will also add back sequences from contigs that were not selected for analysis
+// (eg. decoys) and unaligned reads. the file output from this process will be the
+// "final" XAM provided to the user.
 process cat_haplotagged_contigs {
     label "wf_human_snp"
     cpus 4
@@ -239,12 +246,18 @@ process cat_haplotagged_contigs {
     while read sq; do
         if [ -f "\${sq}_hp.bam" ]; then
             echo "\${sq}_hp.bam" >> cat.fofn
+        elif [ -f "\${sq}_nohp.bam" ]; then
+            echo "\${sq}_nohp.bam" >> cat.fofn
         fi
     done < seq_list.txt
     if [ ! -s cat.fofn ]; then
         echo "No haplotagged inputs to cat? Are the input file names staged correctly?"
         exit 70 # EX_SOFTWARE
     fi
+
+    # we'll add back unaligned reads at the end of the new output file
+    # this file is always mixed in, even if empty
+    echo "unaligned.bam" >> cat.fofn
 
     # cat just cats, if we want bam, we'll have to deal with that ourselves
     if [ "${xam_fmt}" = "cram" ]; then
@@ -324,8 +337,9 @@ process evaluate_candidates {
     // phased_bam just references the input BAM as it no longer contains phase information.
     label "wf_human_snp"
     cpus 1
-    memory { 8.GB * task.attempt }
-    maxRetries 2
+    // [CW-5461] recent testing has shown the Q90 for this is <2GB. we have seen more trouble with this in cloud that may be impacted by reducing this - we can configure that independently if this causes issues.
+    memory { 3.GB * task.attempt }
+    maxRetries 3
     errorStrategy = {task.exitStatus in [137,140] ? 'retry' : 'finish'}
 
     input:
@@ -452,7 +466,7 @@ process merge_pileup_and_full_vars{
 process post_clair_phase_contig {
     // Phase VCF for a contig
     // CW-2383: now uses base image to allow phasing of both snps and indels
-    cpus 4
+    cpus { params.use_longphase ? 4 : 1}
     // Define memory from phasing tool and number of attempt
     memory { params.use_longphase ? longphase_memory[task.attempt - 1] : whatshap_memory[task.attempt - 1] }
     maxRetries 2

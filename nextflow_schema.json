@@ -25,6 +25,12 @@
                         "minknow": {
                             "default": true,
                             "title": "Structural variants"
+                        },
+                        "geneyx": {
+                            "default": true
+                        },
+                        "fabric": {
+                            "default": true
                         }
                     }
                 },
@@ -38,6 +44,12 @@
                         "minknow": {
                             "default": true,
                             "title": "Single nucleotide polymorphisms"
+                        },
+                        "geneyx": {
+                            "default": true
+                        },
+                        "fabric": {
+                            "default": true
                         }
                     }
                 },
@@ -45,7 +57,7 @@
                     "title": "CNV: Copy number variants",
                     "type": "boolean",
                     "description": "Call for copy number variants.",
-                    "help_text": "If this option is selected, copy number variant calling will be carried out with either Spectre (default) or QDNAseq. To use QDNAseq instead of Spectre, use the option `--use_qdnaseq`. Spectre is only compatible with genome build hg38, and if QDNAseq is used, it is only compatible with genome builds hg37 and hg38.",
+                    "help_text": "If this option is selected, copy number variant calling will be carried out with either Spectre (default) or QDNAseq. To use QDNAseq instead of Spectre, use the option --use_qdnaseq.",
                     "default": false,
                     "overrides": {
                         "minknow": {
@@ -77,6 +89,26 @@
                         "minknow": {
                             "title": "Methylation",
                             "default": true
+                        },
+                        "geneyx": {
+                            "default": true
+                        },
+                        "fabric": {
+                            "default": true
+                        }
+                    }
+                },
+                "partner": {
+                    "title": "Partner integration",
+                    "type": "string",
+                    "description": "Prepare outputs for tertiary analyses with partners.",
+                    "hidden": true,
+                    "overrides": {
+                        "geneyx": {
+                            "default": "geneyx"
+                        },
+                        "fabric": {
+                            "default": "fabric"
                         }
                     }
                 }
@@ -211,7 +243,12 @@
                     "type": "boolean",
                     "default": false,
                     "description": "Perform phasing.",
-                    "help_text": "This option enables phasing of SV, SNP and modifications, depending on which sub-workflow has been chosen; see [README](README.md#9-phasing-variants) for more details."
+                    "help_text": "This option enables phasing of SV, SNP and modifications, depending on which sub-workflow has been chosen; see [README](README.md#9-phasing-variants) for more details.",
+                    "overrides": {
+                        "minknow": {
+                            "default": true
+                        }
+                    }
                 },
                 "include_all_ctgs": {
                     "type": "boolean",
@@ -220,7 +257,7 @@
                     "help_text": "Enabling this option will call for variants on all contigs of the input reference sequence. Typically this option is not required as standard human reference sequences contain decoy and unplaced contigs that are usually omitted for the purpose of variant calling. This option might be useful for non-standard reference sequence databases.",
                     "overrides": {
                         "minknow": {
-                            "title": "Include all contigs"
+                            "hidden": true
                         }
                     }
                 },
@@ -228,7 +265,12 @@
                     "type": "boolean",
                     "default": false,
                     "description": "If set to true, the workflow will generate gene-level coverage summaries.",
-                    "help_text": "If set to true, a 4-column BED file must be supplied, where column 4 is the gene label. The workflow will generate a list of all genes in the BED and their percentage coverage at a range of thresholds (1x, 10x, 15x, 20x, and 30x), as well as the average coverage of each gene."
+                    "help_text": "If set to true, a 4-column BED file must be supplied, where column 4 is the gene label. The workflow will generate a list of all genes in the BED and their percentage coverage at a range of thresholds (1x, 10x, 15x, 20x, and 30x), as well as the average coverage of each gene.",
+                    "overrides": {
+                        "minknow": {
+                            "hidden": true
+                        }
+                    }
                 },
                 "output_report": {
                     "type": "boolean",
@@ -255,7 +297,12 @@
                     "type": "boolean",
                     "default": false,
                     "description": "Visualize outputs in the EPI2ME IGV visualizer.",
-                    "help_text": "Enabling this option will visualize the alignments and VCF files in the EPI2ME desktop app IGV visualizer."
+                    "help_text": "Enabling this option will visualize the alignments and VCF files in the EPI2ME desktop app IGV visualizer.",
+                    "overrides": {
+                        "minknow": {
+                            "hidden": true
+                        }
+                    }
                 },
                 "out_dir": {
                     "title": "Output directory",
@@ -452,7 +499,7 @@
                     "type": "boolean",
                     "default": false,
                     "description": "Use QDNAseq for CNV calling.",
-                    "help_text": "Set this to true to use QDNASeq for CNV calling instead of Spectre. QDNAseq is better suited to shorter reads such as those generated from adaptive sampling experiments."
+                    "help_text": "Set this to true to use QDNAseq for CNV calling instead of Spectre. QDNAseq is better suited to shorter reads such as those generated from adaptive sampling experiments."
                 },
                 "qdnaseq_bin_size": {
                     "type": "integer",
@@ -516,7 +563,7 @@
                     ],
                     "overrides": {
                         "minknow": {
-                            "title": "Sex (XX or XY) to be passed to Straglr-genotype."
+                            "hidden": true
                         }
                     }
                 }
@@ -585,7 +632,7 @@
                     "type": "string",
                     "default": "cram",
                     "description": "Desired file format of alignment files created by alignment and phasing.",
-                    "help_text": "This setting controls the file format of (1) alignment files created by aligning or re-aligning an input BAM and (2) alignment files with haplotag information created during phasing of an input BAM. If using QDNASeq for CNV calling, the setting will be ignored for alignment or realignment as QDNASeq requires BAM input.",
+                    "help_text": "This setting controls the file format of (1) alignment files created by aligning or re-aligning an input BAM and (2) alignment files with haplotag information created during phasing of an input BAM. If using QDNAseq for CNV calling, the setting will be ignored for alignment or realignment as QDNAseq requires BAM input.",
                     "enum": [
                         "bam",
                         "cram"
@@ -603,6 +650,13 @@
                     "description": "Additional command line arguments to pass to the Sniffles2 process",
                     "hidden": false,
                     "help_text": "The additional command line arguments will be passed directly to [Sniffles2](https://github.com/fritzsedlazeck/Sniffles/tree/v2.0.7); ensure to use the right commands for the version and from command line provide them as follows: `--sniffles_args=\"--non-germline\"`."
+                },
+                "spectre_args": {
+                    "title": "Spectre additional arguments",
+                    "type": "string",
+                    "description": "Additional command line arguments to pass to the Spectre process",
+                    "hidden": false,
+                    "help_text": "The additional command line arguments will be passed directly to [Spectre](https://github.com/epi2me-labs/ont-spectre); from the command line provide them as follows: `--spectre_args=\"--min-cnv-len 80000\"`."
                 },
                 "override_basecaller_cfg": {
                     "title": "Basecaller configuration",
@@ -800,7 +854,7 @@
             "cpus": 16,
             "memory": "32GB"
         },
-        "run_time": "Variable depending on whether it is targeted sequencing or whole genome sequencing, as well as coverage and the individual analyses requested. For instance, a 90X human sample run (options: `--snp --sv --mod --str --cnv --phased --sex male`) takes less than 8h with recommended resources.",
+        "run_time": "Variable depending on whether it is targeted sequencing or whole genome sequencing, as well as coverage and the individual analyses requested. For instance, a 90X human sample run (options: `--snp --sv --mod --str --cnv --phased --sex XY`) takes less than 8h with recommended resources.",
         "arm_support": false
     }
 }

@@ -37,7 +37,7 @@ Minimum requirements:
 + CPUs = 16
 + Memory = 32GB
 
-Approximate run time: Variable depending on whether it is targeted sequencing or whole genome sequencing, as well as coverage and the individual analyses requested. For instance, a 90X human sample run (options: `--snp --sv --mod --str --cnv --phased --sex male`) takes less than 8h with recommended resources.
+Approximate run time: Variable depending on whether it is targeted sequencing or whole genome sequencing, as well as coverage and the individual analyses requested. For instance, a 90X human sample run (options: `--snp --sv --mod --str --cnv --phased --sex XY`) takes less than 8h with recommended resources.
 
 ARM processor support: False
 
@@ -141,7 +141,7 @@ input_reads.bam     ─── input_directory
 |--------------------------|------|-------------|------|---------|
 | sv | boolean | Call for structural variants. | If this option is selected, structural variant calling will be carried out using Sniffles2. | False |
 | snp | boolean | Call for small variants | If this option is selected, small variant calling will be carried out using Clair3. | False |
-| cnv | boolean | Call for copy number variants. | If this option is selected, copy number variant calling will be carried out with either Spectre (default) or QDNAseq. To use QDNAseq instead of Spectre, use the option `--use_qdnaseq`. Spectre is only compatible with genome build hg38, and if QDNAseq is used, it is only compatible with genome builds hg37 and hg38. | False |
+| cnv | boolean | Call for copy number variants. | If this option is selected, copy number variant calling will be carried out with either Spectre (default) or QDNAseq. To use QDNAseq instead of Spectre, use the option --use_qdnaseq. | False |
 | str | boolean | Enable Straglr to genotype STR expansions. | If this option is selected, genotyping of STR expansions will be carried out using Straglr. This sub-workflow is only compatible with genome build hg38. | False |
 | mod | boolean | Enable output of modified calls to a bedMethyl file [requires input BAM with Ml and Mm tags] | This option is automatically selected and aggregation of modified calls with be carried out using modkit if Ml and Mm tags are found. Disable this option to prevent output of a bedMethyl file. | False |
 
@@ -167,7 +167,7 @@ input_reads.bam     ─── input_directory
 
 | Nextflow parameter name  | Type | Description | Help | Default |
 |--------------------------|------|-------------|------|---------|
-| use_qdnaseq | boolean | Use QDNAseq for CNV calling. | Set this to true to use QDNASeq for CNV calling instead of Spectre. QDNAseq is better suited to shorter reads such as those generated from adaptive sampling experiments. | False |
+| use_qdnaseq | boolean | Use QDNAseq for CNV calling. | Set this to true to use QDNAseq for CNV calling instead of Spectre. QDNAseq is better suited to shorter reads such as those generated from adaptive sampling experiments. | False |
 | qdnaseq_bin_size | integer | Bin size for QDNAseq in kbp. | Pre-computed bin annotations are available for a range of bin sizes. Larger sizes reduce noise, however this may result in reduced sensitivity. | 500 |
 
 
@@ -193,9 +193,10 @@ input_reads.bam     ─── input_directory
 | GVCF | boolean | Enable to output a gVCF file in addition to the VCF outputs (experimental). | By default the the workflow outputs a VCF file containing only records where a variant has been detected. Enabling this option will output additionally a gVCF with records spanning all reference positions regardless of whether a variant was detected in the sample. | False |
 | downsample_coverage | boolean | Downsample the coverage to along the genome. | This options will trigger a downsampling of the read alignments to the target coverage specified by --downsample_coverage_target. Downsampling will make the workflow run faster but could lead to non-deterministic variant calls. | False |
 | downsample_coverage_target | number | Average coverage or reads to use for the analyses. | This options will set the target coverage for the downsampling stage, if downsampling has been enabled. | 60 |
-| output_xam_fmt | string | Desired file format of alignment files created by alignment and phasing. | This setting controls the file format of (1) alignment files created by aligning or re-aligning an input BAM and (2) alignment files with haplotag information created during phasing of an input BAM. If using QDNASeq for CNV calling, the setting will be ignored for alignment or realignment as QDNASeq requires BAM input. | cram |
+| output_xam_fmt | string | Desired file format of alignment files created by alignment and phasing. | This setting controls the file format of (1) alignment files created by aligning or re-aligning an input BAM and (2) alignment files with haplotag information created during phasing of an input BAM. If using QDNAseq for CNV calling, the setting will be ignored for alignment or realignment as QDNAseq requires BAM input. | cram |
 | modkit_args | string | The additional options for modkit. | This is an advanced option to allow running modkit with custom settings. The arguments specified in this option will fully override all options set by the workflow. To provide custom arguments to [modkit pileup](https://nanoporetech.github.io/modkit/advanced_usage.html#pileup) from command line proceed as follows: `--modkit_args="--preset traditional"` |  |
 | sniffles_args | string | Additional command line arguments to pass to the Sniffles2 process | The additional command line arguments will be passed directly to [Sniffles2](https://github.com/fritzsedlazeck/Sniffles/tree/v2.0.7); ensure to use the right commands for the version and from command line provide them as follows: `--sniffles_args="--non-germline"`. |  |
+| spectre_args | string | Additional command line arguments to pass to the Spectre process | The additional command line arguments will be passed directly to [Spectre](https://github.com/epi2me-labs/ont-spectre); from the command line provide them as follows: `--spectre_args="--min-cnv-len 80000"`. |  |
 | override_basecaller_cfg | string | Name of the model to use for selecting a small variant calling model. | The workflow will attempt to find the basecaller model from the headers of your input data, providing a value for this option will override the model found in the data. If the model cannot be found in the header, it must be provided with this option as the basecaller model is required for small variant calling. The basecaller model is used to automatically select the appropriate small variant calling model. The model list shows all models that are compatible for small variant calling with this workflow. You should select 'custom' to override the basecaller_cfg with clair3_model_path. |  |
 | tr_bed | string | Input BED file containing tandem repeat annotations for the reference genome. | Providing a tandem repeat BED can improve calling in repetitive regions. The workflow will attempt to select an appropriate hg19 or hg38 TR BED depending on the genome detected, but this can be overridden with a custom TR BED with this parameter. |  |
 
@@ -238,8 +239,8 @@ Output files may be aggregated including information for all samples or provided
 | Short tandem repeat VCF | {{ alias }}.wf_str.vcf.gz | VCF file with the STR sites for the sample. | per-sample |
 | Alignment file | {{ alias }}.cram | CRAM or BAM file with the aligned reads for the sample, generated when the input file is unaligned. | per-sample |
 | Alignment file index | {{ alias }}.cram.crai | The index of the resulting CRAM or BAM file with the reads for the sample, generated when the input file is unaligned. | per-sample |
-| Haplotagged alignment file | {{ alias }}.haplotagged.cram | CRAM or BAM file with the haplotagged reads for the sample. | per-sample |
-| Haplotagged alignment file index | {{ alias }}.haplotagged.cram.crai | The index of the resulting CRAM or BAM file with the haplotagged reads for the sample. | per-sample |
+| Haplotagged alignment file | {{ alias }}.haplotagged.cram | CRAM or BAM file of all input reads with haplotags added by phasing. | per-sample |
+| Haplotagged alignment file index | {{ alias }}.haplotagged.cram.crai | The index of the resulting CRAM or BAM file produced when haplotags have been added by phasing. | per-sample |
 | Mean coverage for each region | {{ alias }}.regions.bed.gz | The mean coverage in the individual regions of the genome in BED format. | per-sample |
 | Coverage per region above the given thresholds | {{ alias }}.thresholds.bed.gz | The BED reporting the number of bases in each region that are covered at or above each threshold values (1x, 10x, 20x and 30x). | per-sample |
 | Distribution of the proportion of total bases covered by a given coverage value | {{ alias }}.mosdepth.global.dist.txt | The cumulative distribution indicating the proportion of total bases covered by a given coverage value, both genome-wide and by sequence. | per-sample |
@@ -313,7 +314,7 @@ Haplotype-resolved aggregated counts of modified bases can be obtained with the 
 
 ### 6a. Copy number variants (CNV) calling with Spectre
 
-CNV calling is performed using a fork of [Spectre](https://github.com/fritzsedlazeck/Spectre/tree/ont-dev), using the `--cnv` flag. Spectre is the default CNV caller in the workflow, and is compatible with hg38/GRCh38. The output of this workflow is a VCF of CNV calls, annotated with SnpEff.
+CNV calling is performed using an ONT implementation of [Spectre](https://github.com/epi2me-labs/ont-spectre/) using the `--cnv` flag. Spectre is the default CNV caller in the workflow and is compatible with genome builds hg19/GRCh37 or hg38/GRCh38. The output of this workflow is a VCF of CNV calls annotated with SnpEff. Advanced users may wish to override default parameters using `--spectre_args`, e.g. `--spectre_args "--min-cnv-len 100000"`. We don't recommend setting `--min-cnv-len` to less than N50 * 5 to avoid false positive calls.
 
 ### 6b. Copy number variants (CNV) calling with QDNASeq
 
@@ -355,7 +356,7 @@ Some of the sub-workflows in wf-human-variation are restricted to certain genome
 
 |    Genome    | `--snp`  | `--sv`  | `--mod` | `--cnv` | `--cnv --use_qdnaseq` | `--str` | `--annotation false` | `--include_all_ctgs` |
 |--------------|----------|---------|---------|---------|-----------------------|---------|----------------------|----------------------|
-| hg19/GRCh37  | &check;  | &check; | &check; |         |        &check;        |         |         \*           |                      |
+| hg19/GRCh37  | &check;  | &check; | &check; | &check; |        &check;        |         |         \*           |                      |
 | hg38/GRCh38  | &check;  | &check; | &check; | &check; |        &check;        | &check; |         \*           |                      |
 | Other human  | &check;  | &check; | &check; |         |                       |         |       &check;        |                      |
 | Non human    | &check;  | &check; | &check; |         |                       |         |       &check;        |       &check;        |

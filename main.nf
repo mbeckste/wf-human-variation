@@ -15,6 +15,8 @@ include { cnv as cnv_spectre } from './workflows/wf-human-cnv'
 
 include { cnv as cnv_qdnaseq } from './workflows/wf-human-cnv-qdnaseq'
 
+include { partners } from './workflows/partners'
+
 include {
     index_ref_gzi;
     index_ref_fai;
@@ -163,7 +165,9 @@ workflow {
 
     // Trigger haplotagging
     def run_haplotagging = params.str || params.phased
-
+    
+    // Combine data for partners
+    def run_partners = params.partner?: false
     // Trigger CRAM to BAM conversion (for qdnaseq)
     // This will:
     // - cause downsampling to always be emitted as BAM
@@ -251,7 +255,7 @@ workflow {
     //   based on the genome build should be activated only by this boolean
     def enforce_genome_build = \
         // always check genome build for CNV and STR subworkflows
-        // getGenome will take care of checking which build is required for the CNV flavours
+        // getGenome will take care of checking which build is required for STR
         (params.cnv || params.str) \
         // or if annotating, check genome build when using SNP, SV or phasing
         // as SnpEff annotations are only provided for hg19 and hg38
@@ -871,7 +875,8 @@ workflow {
                 pass_bam_channel,
                 ref_channel,
                 clair_vcf.vcf_files,
-                bed
+                bed,
+                genome_build
             )
         }
         cnv_vcf = results_cnv.cnv_vcf
@@ -915,6 +920,18 @@ workflow {
         hap_check,
         sex,
     )
+
+    // If the workflow is set to run for the partner, then execute the merging
+    if (run_partners){
+        partners(
+            snp_vcf,
+            sv_vcf,
+            cnv_vcf,
+            str_vcf,
+            pass_bam_channel,
+            run_haplotagging
+        )
+    }
 
     // Prepare IGV viewer
     if (params.igv){

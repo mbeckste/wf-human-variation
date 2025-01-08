@@ -56,7 +56,7 @@ process decompress_ref {
 
 //NOTE grep MOSDEPTH_TUPLE if changing output tuple
 process mosdepth {
-    cpus 2
+    cpus 4
     memory {4.GB * task.attempt}
     maxRetries 2
     errorStrategy = {task.exitStatus in [137,140] ? 'retry' : 'finish'}
@@ -124,7 +124,7 @@ process mosdepth {
 
 process readStats {
     label "wf_common"
-    cpus 4
+    cpus 8
     memory 4.GB
     input:
         tuple path(xam), path(xam_idx), val(xam_meta)
@@ -137,16 +137,16 @@ process readStats {
         path "${xam_meta.alias}.runids.txt", emit: runids
         tuple val(xam_meta), path("${xam_meta.alias}.basecallers.txt"), emit: basecallers
     script:
-        def stats_threads = Math.max(task.cpus - 1, 1)
+        def view_threads = Math.max(task.cpus - 2, 1)
         """
-        samtools view -b -h -L ${target_bed} ${xam} | bamstats \
+        samtools view --threads ${view_threads} -u -h -L ${target_bed} ${xam} | bamstats \
             -s ${xam_meta.alias} \
             -i ${xam_meta.alias}.per-file-runids.txt \
             -l ${xam_meta.alias}.basecallers.tsv \
             --histogram ${xam_meta.alias}-histograms \
             -u \
             -f ${xam_meta.alias}.flagstat.tsv \
-            --threads ${stats_threads} \
+            --threads 2 \
             - | gzip > "${xam_meta.alias}.readstats.tsv.gz"
         # get unique run IDs
         awk -F '\\t' '
@@ -203,15 +203,14 @@ process getGenome {
      script:
         // set flags for subworkflows that have genome build restrictions
         def str_arg = params.str ? "--str" : ""
-        def cnv_arg = params.cnv ? "--cnv" : ""
-        def qdnaseq_arg = params.use_qdnaseq ? "--use_qdnaseq" : ""
         """
         # use view -H rather than idxstats, as idxstats will still cause a scan of the whole CRAM (https://github.com/samtools/samtools/issues/303)
         samtools view -H ${xam} --no-PG | grep '^@SQ' | sed -nE 's,.*SN:([^[:space:]]*).*LN:([^[:space:]]*).*,\\1\\t\\2,p' > ${xam}_genome.txt
-        get_genome.py --chr_counts ${xam}_genome.txt -o output.txt ${str_arg} ${cnv_arg} ${qdnaseq_arg}
+        get_genome.py --chr_counts ${xam}_genome.txt -o output.txt ${str_arg}
         genome_build=`cat output.txt`
         """
 }
+
 
 process eval_downsampling {
     label "wf_common"
@@ -716,3 +715,40 @@ process haplocheck {
         fi
         """
 }
+
+
+process extract_not_haplotagged_contigs {
+    label "wf_common"
+    cpus 8
+    memory 8.GB
+    input:
+        tuple path(xam), path(xam_idx), val(xam_meta)
+        path("haplotagged_sq.fosn")
+    output:
+        tuple val(xam_meta), path("output/*.bam")
+    script:
+    def extra_view_threads = task.cpus - 1  // dont call math.Max, can be zero
+    """
+    mkdir -p output
+
+    # create file of sequence names by extracting all SQ SN 
+    samtools view -H --no-PG '${xam}' | grep '^@SQ' | sed -nE 's,.*SN:([^[:space:]]*).*,\\1,p' > all_sq.fosn
+
+    # pull out contigs that do not appear in the haplotagged fofn
+    # sort haplotagged contig list here (dont leave it to nextflow collectfile)
+    comm -23 <(sort all_sq.fosn) <(sort haplotagged_sq.fosn) > unhaplotagged_sq.fosn
+
+    if [ -s unhaplotagged_sq.fosn ]; then
+        while read sq; do
+            echo "Extracting \${sq}"
+            samtools view ${xam} "\${sq}" -@ ${extra_view_threads} --no-PG -o "output/\${sq}_nohp.bam"
+        done < unhaplotagged_sq.fosn
+    fi
+
+    # bonus bam: pull out unaligned - this file will always be created
+    # use '*' region rather than -f4 for speeds
+    echo "Extracting *"
+    samtools view ${xam} '*' -@ ${extra_view_threads} --no-PG -o output/unaligned.bam
+    """
+}
+
